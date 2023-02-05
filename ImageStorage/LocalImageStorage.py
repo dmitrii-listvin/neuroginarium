@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from ImageStorage.ImageStorage import ImageStorage
 
 
@@ -12,7 +13,9 @@ class LocalImageStorage(ImageStorage):
         return res
 
     async def save_image(self, image: bytes, path: str) -> bool:
-        with open(f"{self.base_path}/{path}", 'wb') as f:
+        writepath = f"{self.base_path}/{path}"
+        Path('/'.join(writepath.split('/')[:-1])).mkdir(parents=True, exist_ok=True)
+        with open(writepath, "wb") as f:
             f.write(image)
         return True
 

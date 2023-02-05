@@ -1,6 +1,7 @@
 import yaml
 import logging
 import importlib
+import uuid
 from telegram import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
@@ -33,6 +34,13 @@ image_getter_class = getattr(image_getter_module, image_getter_class_name)
 image_getter = image_getter_class(
     config["image_generation"]["image_height"],
     config["image_generation"]["image_width"],
+)
+
+image_storage_class_name = config["file_system"]["image_storage_class"]
+image_storage_module = importlib.import_module(f"ImageStorage.{image_storage_class_name}")
+image_storage_class = getattr(image_storage_module, image_storage_class_name)
+image_storage = image_storage_class(
+    config["file_system"]["local"]["base_path"]
 )
 
 MENU, CARD, CHOOSE_CARD = range(3)
@@ -110,7 +118,9 @@ async def add_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     choice_number = int(text) - 1
     selected_image = context.user_data["card_choices"][choice_number]
-    # selected_image.seek(0)  # it's already read IO buffer, so need to rewind it to start
+
+    await image_storage.save_image(selected_image, f"{user.id}/{uuid.uuid4()}.png")
+
     await update.message.reply_photo(
         photo=selected_image, caption="you added this card!"
     )
