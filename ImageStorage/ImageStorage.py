@@ -5,7 +5,7 @@ class ImageStorage:
     async def load_image(self, path: str) -> bytes:
         raise NotImplementedError()
 
-    async def save_image(self, image: bytes, path: str) -> bool:
+    async def save_image(self, image: bytes) -> str:
         raise NotImplementedError()
 
     def __init__(self):
