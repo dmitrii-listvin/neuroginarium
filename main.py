@@ -85,7 +85,7 @@ async def generate_card_answer(
     context.user_data["card_choices"] = images
 
     media_group = [
-        InputMediaPhoto(media=open(image, "rb"), caption=str(i + 1))
+        InputMediaPhoto(media=image, caption=str(i + 1))
         for i, image in enumerate(images)
     ]
 
@@ -110,7 +110,7 @@ async def add_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     choice_number = int(text) - 1
     selected_image = context.user_data["card_choices"][choice_number]
-
+    # selected_image.seek(0)  # it's already read IO buffer, so need to rewind it to start
     await update.message.reply_photo(
         photo=selected_image, caption="you added this card!"
     )
