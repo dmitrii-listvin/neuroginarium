@@ -18,4 +18,14 @@ file_system:
     bucket: "YOUR_BUCKET"
   local:
     base_path: "decks"
+database:
+  type: "sqlite"
+  sqlite:
+    filename: "database.sqlite"
+    create_db: True
+  postgres:
+    user: ""
+    password: ""
+    host: ""
+    database: ""
 ```
