@@ -1,6 +1,7 @@
 import yaml
 import logging
 import importlib
+from enum import Enum
 from telegram import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
@@ -50,7 +51,9 @@ db.bind(**db_params)
 db.generate_mapping(create_tables=True)
 set_sql_debug(True)
 
-MENU, CARD, CHOOSE_CARD, PERSONAL_DECK_CHOICE = range(4)
+class DialogState(Enum):
+    MENU, CARD, CHOOSE_CARD, PERSONAL_DECK_CHOICE = range(4)
+
 
 MENU_CREATE_NEW_CARD = "Create new card"
 MENU_VIEW_DECK = "View deck"
@@ -94,7 +97,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         reply_markup=ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=True),
     )
 
-    return MENU
+    return DialogState.MENU
 
 
 async def generate_card_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -106,7 +109,7 @@ async def generate_card_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
         "Write your promt to generate card, or 'menu' to return to menu",
     )
 
-    return CARD
+    return DialogState.CARD
 
 
 async def generate_card_answer(
@@ -137,7 +140,7 @@ async def generate_card_answer(
         ),
     )
 
-    return CHOOSE_CARD
+    return DialogState.CHOOSE_CARD
 
 
 async def add_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -205,7 +208,7 @@ async def view_deck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             "You have no cards in deck; Create one",
             reply_markup=ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=True),
         )
-        return MENU
+        return DialogState.MENU
     else:
         cards_str = "\n".join(
             [f"id:{c.id}, promt:{c.promt}" for c in player_deck_cards]
@@ -213,7 +216,7 @@ async def view_deck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(
             f"Send id of your card to view it or 'None' to return to menu:\n\n{cards_str}"
         )
-        return PERSONAL_DECK_CHOICE
+        return DialogState.PERSONAL_DECK_CHOICE
 
 
 async def view_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -232,7 +235,7 @@ async def view_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         f"Send another id of your card to view it or 'None' to return to menu"
     )
-    return PERSONAL_DECK_CHOICE
+    return DialogState.PERSONAL_DECK_CHOICE
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -253,23 +256,23 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            MENU: [
+            DialogState.MENU: [
                 MessageHandler(filters.Regex(f"^{MENU_CREATE_NEW_CARD}$"), generate_card_menu),
                 MessageHandler(filters.Regex(f"^{MENU_VIEW_DECK}$"), view_deck),
                 MessageHandler(filters.Regex(f"^{MENU_DONE}$"), cancel),
             ],
-            CARD: [
+            DialogState.CARD: [
                 MessageHandler(filters.Regex("^menu$"), start),
                 MessageHandler(
                     ~filters.Regex("^menu$") & filters.TEXT & ~filters.COMMAND,
                     generate_card_answer,
                 ),
             ],
-            CHOOSE_CARD: [
+            DialogState.CHOOSE_CARD: [
                 MessageHandler(filters.Regex("^\d$"), add_card),
                 MessageHandler(filters.Regex("^None$"), generate_card_menu),
             ],
-            PERSONAL_DECK_CHOICE: [
+            DialogState.PERSONAL_DECK_CHOICE: [
                 MessageHandler(filters.Regex("^\d$"), view_card),
                 MessageHandler(filters.Regex("^None$"), start),
             ],
