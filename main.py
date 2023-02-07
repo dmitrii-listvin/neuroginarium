@@ -42,7 +42,8 @@ image_storage_module = importlib.import_module(
     f"ImageStorage.{image_storage_class_name}"
 )
 image_storage_class = getattr(image_storage_module, image_storage_class_name)
-image_storage = image_storage_class(config["file_system"]["local"]["base_path"])
+image_storage_params = config["file_system"][image_storage_class_name]
+image_storage = image_storage_class(**image_storage_params)
 
 db_type = config["database"]["type"]
 db_params = config["database"][db_type]
