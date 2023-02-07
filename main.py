@@ -7,6 +7,7 @@ from telegram import (
     ReplyKeyboardRemove,
     Update,
     InputMediaPhoto,
+    User
 )
 from telegram.ext import (
     Application,
@@ -29,13 +30,8 @@ with open("config.yml", "r") as yamlfile:
 
 num_of_variants = config["generation_choices_cnt"]
 
-image_getter_class_name = config["image_generation"]["image_getter_class"]
-image_getter_module = importlib.import_module(f"ImageGetter.{image_getter_class_name}")
-image_getter_class = getattr(image_getter_module, image_getter_class_name)
-image_getter = image_getter_class(
-    config["image_generation"]["image_height"],
-    config["image_generation"]["image_width"],
-)
+from ImageGetter import get_image_getter
+image_getter = get_image_getter(config["image_generation"])
 
 image_storage_class_name = config["file_system"]["image_storage_class"]
 image_storage_module = importlib.import_module(
@@ -64,6 +60,10 @@ menu_keyboard = [
     [MENU_CREATE_NEW_CARD, MENU_VIEW_DECK],
     [MENU_DONE],
 ]
+
+
+def user2player(user: User) -> Player:
+    return Player.get(id=str(user.id))
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -160,7 +160,7 @@ async def add_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
 
     with db_session:
-        player = Player.get(id=str(user.id))
+        player = user2player(user)
         if player is None:
             logger.error(
                 f"{user.id}:{user.first_name} added a card although he has no record in DB"
@@ -191,7 +191,7 @@ async def view_deck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     logger.info(f"{user.id}:{user.first_name} requested to view personal deck")
 
     with db_session:
-        player = Player.get(id=str(user.id))
+        player = user2player(user)
         if player is None:
             logger.error(
                 f"{user.id}:{user.first_name} requested to view personal deck although he has no record in DB"
