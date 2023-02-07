@@ -12,11 +12,11 @@ image_generation:
   image_width: 250
 file_system:
   image_storage_class: "LocalImageStorage"
-  s3:
+  S3ImageStorage:
     ak: "YOUR_AK"
     sk: "YOUR_SK"
-    bucket: "YOUR_BUCKET"
-  local:
+    bucket: "neuroginarium"
+  LocalImageStorage:
     base_path: "decks"
 database:
   type: "sqlite"
