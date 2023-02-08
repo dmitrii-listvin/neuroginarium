@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Dict
+
 
 class ImageGetter:
     async def get_card(self, promt: str) -> bytes:
@@ -10,7 +11,13 @@ class ImageGetter:
             cards.append(await self.get_card(promt))
         return cards
 
-    def __init__(self, height, width):
+    def __init__(self, height: int, width: int):
         self.height = height
         self.width = width
         pass
+
+    @staticmethod
+    def build(config: Dict):
+        subclasses = {cls.__name__: cls for cls in ImageGetter.__subclasses__()}
+        cls_name = config['image_getter_class']
+        return subclasses[cls_name](**config[cls_name])
