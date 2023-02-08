@@ -40,15 +40,15 @@ bind_db(config["database"])
 class DialogState(Enum):
     MENU, CARD, CHOOSE_CARD, PERSONAL_DECK_CHOICE = range(4)
 
+class Menu:
+    CREATE_NEW_CARD = "Create new card"
+    VIEW_DECK = "View deck"
+    DONE = "Done"
 
-MENU_CREATE_NEW_CARD = "Create new card"
-MENU_VIEW_DECK = "View deck"
-MENU_DONE = "Done"
-
-menu_keyboard = [
-    [MENU_CREATE_NEW_CARD, MENU_VIEW_DECK],
-    [MENU_DONE],
-]
+    keyboard = [
+        [CREATE_NEW_CARD, VIEW_DECK],
+        [DONE],
+    ]
 
 
 def user2player(user: User) -> Player:
@@ -84,7 +84,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         "Hi! My name is Neuroginarium bot. Select an option from menu:\n\n"
         "Send /cancel to stop talking to me.",
-        reply_markup=ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=True),
+        reply_markup=ReplyKeyboardMarkup(Menu.keyboard, one_time_keyboard=True),
     )
 
     return DialogState.MENU
@@ -195,7 +195,7 @@ async def view_deck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if len(player_deck_cards) == 0:
         await update.message.reply_text(
             "You have no cards in deck; Create one",
-            reply_markup=ReplyKeyboardMarkup(menu_keyboard, one_time_keyboard=True),
+            reply_markup=ReplyKeyboardMarkup(Menu.keyboard, one_time_keyboard=True),
         )
         return DialogState.MENU
     else:
@@ -246,14 +246,14 @@ def main() -> None:
         entry_points=[CommandHandler("start", start)],
         states={
             DialogState.MENU: [
-                MessageHandler(filters.Regex(f"^{MENU_CREATE_NEW_CARD}$"), generate_card_menu),
-                MessageHandler(filters.Regex(f"^{MENU_VIEW_DECK}$"), view_deck),
-                MessageHandler(filters.Regex(f"^{MENU_DONE}$"), cancel),
+                MessageHandler(filters.Regex(f"^{Menu.CREATE_NEW_CARD}$"), generate_card_menu),
+                MessageHandler(filters.Regex(f"^{Menu.VIEW_DECK}$"), view_deck),
+                MessageHandler(filters.Regex(f"^{Menu.DONE}$"), cancel),
             ],
             DialogState.CARD: [
                 MessageHandler(filters.Regex("^menu$"), start),
                 MessageHandler(
-                    ~filters.Regex("^menu$") & filters.TEXT & ~filters.COMMAND,
+                    ~filters.Regex("^menu$") & filters.TEXT,
                     generate_card_answer,
                 ),
             ],
