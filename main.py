@@ -1,6 +1,5 @@
 import yaml
 import logging
-import importlib
 from enum import Enum
 from telegram import (
     ReplyKeyboardMarkup,
@@ -18,6 +17,8 @@ from telegram.ext import (
     filters,
 )
 from GameModel.model import *
+from ImageGetter import *
+from ImageStorage import *
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -30,23 +31,11 @@ with open("config.yml", "r") as yamlfile:
 
 num_of_variants = config["generation_choices_cnt"]
 
-from ImageGetter import get_image_getter
-image_getter = get_image_getter(config["image_generation"])
+image_getter = ImageGetter.build(config["image_generation"])
+image_storage = ImageStorage.build(config["file_system"])
 
-image_storage_class_name = config["file_system"]["image_storage_class"]
-image_storage_module = importlib.import_module(
-    f"ImageStorage.{image_storage_class_name}"
-)
-image_storage_class = getattr(image_storage_module, image_storage_class_name)
-image_storage_params = config["file_system"][image_storage_class_name]
-image_storage = image_storage_class(**image_storage_params)
+bind_db(config["database"])
 
-db_type = config["database"]["type"]
-db_params = config["database"][db_type]
-db_params["provider"] = db_type
-db.bind(**db_params)
-db.generate_mapping(create_tables=True)
-set_sql_debug(True)
 
 class DialogState(Enum):
     MENU, CARD, CHOOSE_CARD, PERSONAL_DECK_CHOICE = range(4)
@@ -169,11 +158,10 @@ async def add_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             new_card = Card(
                 promt=context.user_data["promt"],
                 author=player,
-                image_storage=image_storage_class_name,
+                image_storage=config["file_system"]["image_storage_class"],
                 image_path=saved_path,
                 deck=player.deck,
             )
-            # commit()
             logger.info(
                 f"{user.id}:{user.first_name} added new card with id {new_card.id} to personal deck"
             )
