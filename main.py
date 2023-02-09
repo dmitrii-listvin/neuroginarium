@@ -165,7 +165,12 @@ async def view_deck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             [f"id:{c.id}, promt:{c.promt}" for c in player_deck_cards]
         )
         await update.message.reply_text(
-            f"Send id of your card to view it or 'None' to return to menu:\n\n{cards_str}"
+            f"You deck contents:\n\n{cards_str}"
+        )
+        await update.message.reply_text(
+            f"Send id of your card to view it \n"
+            f"Send 'delete <id>' to delete your card \n"
+            f"or 'None' to return to menu"
         )
         return DialogState.PERSONAL_DECK_CHOICE
 
@@ -175,7 +180,7 @@ async def view_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     logger.info(f"{user.id}:{user.first_name} requested to view {text}")
 
-    card_path = db_helper.get_card_path_by_id(int(text))  # will be able to view others cards, lol
+    card_path = db_helper.get_user_card_path_by_id(user, int(text))
     if card_path is None:
         await update.message.reply_text(f"No cards with this id!")
     else:
@@ -183,7 +188,28 @@ async def view_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_photo(photo=image)
 
     await update.message.reply_text(
-        f"Send another id of your card to view it or 'None' to return to menu"
+        f"Send another id of your card to view it \n"
+        f"Send 'delete <id>' to delete your card \n"
+        f"or 'None' to return to menu"
+    )
+    return DialogState.PERSONAL_DECK_CHOICE
+
+
+async def delete_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user = update.message.from_user
+    text = update.message.text
+    logger.info(f"{user.id}:{user.first_name} requested to {text}")
+
+    id_to_delete = int(text.split(" ")[1])
+    if db_helper.delete_player_card(user, id_to_delete):
+        await update.message.reply_text(f"Card with id {id_to_delete} is removed from your deck")
+    else:
+        await update.message.reply_text(f"No card with id {id_to_delete} found")
+
+    await update.message.reply_text(
+        f"Send another id of your card to view it \n"
+        f"Send 'delete <id>' to delete your card \n"
+        f"or 'None' to return to menu"
     )
     return DialogState.PERSONAL_DECK_CHOICE
 
@@ -224,6 +250,7 @@ def main() -> None:
             ],
             DialogState.PERSONAL_DECK_CHOICE: [
                 MessageHandler(filters.Regex("^\d$"), view_card),
+                MessageHandler(filters.Regex("^delete \d$"), delete_card),
                 MessageHandler(filters.Regex("^None$"), start),
             ],
         },
