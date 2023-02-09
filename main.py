@@ -17,6 +17,7 @@ from telegram.ext import (
     filters,
 )
 from game_model.model import *
+from game_model.db_helper import DBHelper
 from image_getter import *
 from image_storage import *
 
@@ -34,7 +35,8 @@ num_of_variants = config["generation_choices_cnt"]
 image_getter = ImageGetter.build(config["image_generation"])
 image_storage = ImageStorage.build(config["file_system"])
 
-bind_db(config["database"])
+db_helper = DBHelper(db, logger)
+db_helper.bind_db(config["database"])
 
 
 class DialogState(Enum):
@@ -67,20 +69,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     logger.info(f"{user.id}:{user.first_name} started /start")
 
-    with db_session:
-        player = Player.get(id=str(user.id))
-        if player is None:
-            logger.info(
-                f"{user.id}:{user.first_name} is a new player with no record in DB"
-            )
-            new_player_deck = Deck()
-            new_player = Player(id=str(user.id), deck=new_player_deck)
-            # commit()
-            logger.info(
-                f"{user.id}:{user.first_name} registered in DB with deck id {new_player_deck.id}"
-            )
-        else:
-            logger.info(f"{user.id}:{user.first_name} already exists in DB")
+    db_helper.register_player_if_not_exist(user)
 
     await update.message.reply_text(
         "Hi! My name is Neuroginarium bot. Select an option from menu:\n\n"
@@ -149,23 +138,7 @@ async def add_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         f"{user.id}:{user.first_name} chosen number {choice_number}; image saved to {saved_path}"
     )
 
-    with db_session:
-        player = user2player(user)
-        if player is None:
-            logger.error(
-                f"{user.id}:{user.first_name} added a card although he has no record in DB"
-            )
-        else:
-            new_card = Card(
-                promt=context.user_data["promt"],
-                author=player,
-                image_storage=config["file_system"]["image_storage_class"],
-                image_path=saved_path,
-                deck=player.deck,
-            )
-            logger.info(
-                f"{user.id}:{user.first_name} added new card with id {new_card.id} to personal deck"
-            )
+    db_helper.add_card_to_user_deck(user, context.user_data["promt"], saved_path)
 
     await update.message.reply_photo(
         photo=selected_image, caption="you added this card!"
@@ -179,19 +152,7 @@ async def view_deck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.message.from_user
     logger.info(f"{user.id}:{user.first_name} requested to view personal deck")
 
-    with db_session:
-        player = user2player(user)
-        if player is None:
-            logger.error(
-                f"{user.id}:{user.first_name} requested to view personal deck although he has no record in DB"
-            )
-        else:
-            player_deck_cards = list(
-                select(card for card in Card if card.deck.id == player.deck.id)
-            )
-            logger.info(
-                f"{user.id}:{user.first_name} found {len(player_deck_cards)} in personal deck"
-            )
+    player_deck_cards = db_helper.get_player_cards(user)
 
     if len(player_deck_cards) == 0:
         await update.message.reply_text(
@@ -214,13 +175,12 @@ async def view_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     logger.info(f"{user.id}:{user.first_name} requested to view {text}")
 
-    with db_session:
-        card = Card.get(id=int(text))  # will be able to view others cards, lol
-        if card is None:
-            await update.message.reply_text(f"No cards with this id!")
-        else:
-            image = await image_storage.load_image(card.image_path)
-            await update.message.reply_photo(photo=image)
+    card_path = db_helper.get_card_path_by_id(int(text))  # will be able to view others cards, lol
+    if card_path is None:
+        await update.message.reply_text(f"No cards with this id!")
+    else:
+        image = await image_storage.load_image(card_path)
+        await update.message.reply_photo(photo=image)
 
     await update.message.reply_text(
         f"Send another id of your card to view it or 'None' to return to menu"

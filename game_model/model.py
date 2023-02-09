@@ -33,7 +33,7 @@ class Card(db.Entity):
     id = PrimaryKey(int, auto=True)
     promt = Required(str)
     author = Required(Player)
-    image_storage = Required(str)
+    # image_storage = Required(str)
     image_path = Required(str)
     deck = Required(Deck)
 
