@@ -1,0 +1,8 @@
+accelerate==0.15.0
+git+https://github.com/huggingface/diffusers.git@0ca172407db4f0656395bae40ea5848f4918742b
+matplotlib==3.6.2
+opencv-python-headless==4.6.0.66
+streamlit==1.16.0
+transformers==4.25.1
+flask==2.2.2
+jinja2==3.1.2
