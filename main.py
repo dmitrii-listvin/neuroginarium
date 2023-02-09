@@ -16,9 +16,9 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-from GameModel.model import *
-from ImageGetter import *
-from ImageStorage import *
+from game_model.model import *
+from image_getter import *
+from image_storage import *
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -39,6 +39,7 @@ bind_db(config["database"])
 
 class DialogState(Enum):
     MENU, CARD, CHOOSE_CARD, PERSONAL_DECK_CHOICE = range(4)
+
 
 class Menu:
     CREATE_NEW_CARD = "Create new card"

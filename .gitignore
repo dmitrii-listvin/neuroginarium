@@ -1,5 +1,7 @@
 config.yml
 
+decks/
+
 .idea/
 
 # Byte-compiled / optimized / DLL files
