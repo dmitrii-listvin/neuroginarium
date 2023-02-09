@@ -1,5 +1,5 @@
 from io import BytesIO
-from ImageGetter.ImageGetter import ImageGetter
+from image_getter.image_getter import ImageGetter
 from randimage import get_random_image
 from matplotlib.image import imsave
 

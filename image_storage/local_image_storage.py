@@ -1,7 +1,7 @@
 import os
 import uuid
 from pathlib import Path
-from ImageStorage.ImageStorage import ImageStorage
+from image_storage.image_storage import ImageStorage
 
 
 class LocalImageStorage(ImageStorage):

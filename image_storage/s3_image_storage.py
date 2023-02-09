@@ -1,6 +1,6 @@
 import uuid
 import boto3
-from ImageStorage.ImageStorage import ImageStorage
+from image_storage.image_storage import ImageStorage
 
 
 class S3ImageStorage(ImageStorage):
