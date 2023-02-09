@@ -66,10 +66,45 @@ class DBHelper:
                 )
                 return player_deck_cards
 
-    def get_card_path_by_id(self, card_id: int) -> type_optional[str]:
+    def get_user_card_path_by_id(self, user: User, card_id: int) -> type_optional[str]:
         with db_session:
-            card = Card.get(id=card_id)  # will be able to view others cards, lol
-            if card is None:
-                raise
+            player = Player.get(id=str(user.id))
+            if player is None:
+                self.logger.error(
+                    f"{user.id}:{user.first_name} requested to view card although he has no record in DB"
+                )
+                return None
             else:
-                return card.image_path
+                card = Card.get(id=card_id)
+                if card is None:
+                    return None
+                elif card.author != player:
+                    return None
+                else:
+                    return card.image_path
+
+    def delete_player_card(self, user: User, card_id: int) -> bool:
+        with db_session:
+            player = Player.get(id=str(user.id))
+            if player is None:
+                self.logger.error(
+                    f"{user.id}:{user.first_name} requested to delete card although he has no record in DB"
+                )
+            else:
+                card_to_delete = Card.get(id=card_id)
+                if card_to_delete is None:
+                    self.logger.info(
+                        f"{user.id}:{user.first_name} attempted to delete non existence card {card_id}, not deleting"
+                    )
+                    return False
+                elif card_to_delete.author == player:
+                    card_to_delete.delete()
+                    self.logger.info(
+                        f"{user.id}:{user.first_name} successfully deleted card {card_id}"
+                    )
+                    return True
+                else:
+                    self.logger.info(
+                        f"{user.id}:{user.first_name} attempted to delete not their card {card_id}, not deleting"
+                    )
+                    return False
