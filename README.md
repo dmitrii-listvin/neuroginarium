@@ -4,17 +4,20 @@
 Create config.yml in root directory.
 Write bot token there:
 ```
-bot_token: "YOUR_TOKEN"
-generation_choices_cnt: 4
+bot_token: "TOKEN"
+generation_choices_cnt: 2
 image_generation:
-  image_getter_class: "RandomImageGetter"
-  image_height: 350
-  image_width: 250
+  image_getter_class: "UrlImageGetter"
+  RandomImageGetter:
+    height: 350
+    width: 350
+  UrlImageGetter:
+    url: "URL"
 file_system:
   image_storage_class: "LocalImageStorage"
   S3ImageStorage:
-    ak: "YOUR_AK"
-    sk: "YOUR_SK"
+    ak: "AK"
+    sk: "SK"
     bucket: "neuroginarium"
   LocalImageStorage:
     base_path: "decks"
