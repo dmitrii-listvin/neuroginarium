@@ -6,7 +6,9 @@ from matplotlib.image import imsave
 
 class RandomImageGetter(ImageGetter):
     def __init__(self, height, width):
-        super().__init__(height, width)
+        super().__init__()
+        self.height = height
+        self.width = width
 
     async def get_card(self, promt: str) -> bytes:
         img_size = (self.height, self.width)

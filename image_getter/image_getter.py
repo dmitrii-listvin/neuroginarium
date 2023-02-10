@@ -11,9 +11,7 @@ class ImageGetter:
             cards.append(await self.get_card(promt))
         return cards
 
-    def __init__(self, height: int, width: int):
-        self.height = height
-        self.width = width
+    def __init__(self):
         pass
 
     @staticmethod
