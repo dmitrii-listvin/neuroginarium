@@ -6,7 +6,7 @@ db = Database()
 
 class Game(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Required(str)
+    name = Optional(str)
 
 
 class Deck(db.Entity):
