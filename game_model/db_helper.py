@@ -17,6 +17,11 @@ class DBHelper:
         self.db.generate_mapping(create_tables=True)
         set_sql_debug(True)
 
+    def create_new_game(self):
+        with db_session:
+            game = Game()
+            return game
+
     def register_player_if_not_exist(self, user: User):
         with db_session:
             player = Player.get(id=str(user.id))
