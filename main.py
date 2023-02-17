@@ -1,7 +1,6 @@
 import yaml
 import logging
 from telegram import (
-    ReplyKeyboardMarkup,
     Update,
     User
 )
@@ -65,7 +64,6 @@ def main() -> None:
     application = Application.builder().token(config["bot_token"]).build()
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("start", start))
-    
 
     application.add_handler(ViewDeckHandler(image_getter, image_storage, db_helper, num_of_variants)())
     application.add_handler(GameplayHandler(db_helper)())

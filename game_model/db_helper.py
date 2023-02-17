@@ -17,11 +17,6 @@ class DBHelper:
         self.db.generate_mapping(create_tables=True)
         set_sql_debug(True)
 
-    def create_new_game(self):
-        with db_session:
-            game = Game()
-            return game
-
     def register_player_if_not_exist(self, user: User):
         with db_session:
             player = Player.get(id=str(user.id))
@@ -29,10 +24,9 @@ class DBHelper:
                 self.logger.info(
                     f"{user.id}:{user.first_name} is a new player with no record in DB"
                 )
-                new_player_deck = Deck()
-                new_player = Player(id=str(user.id), deck=new_player_deck)
+                new_player = Player(id=str(user.id), first_name=user.first_name, last_name=user.last_name, deck=Deck())
                 self.logger.info(
-                    f"{user.id}:{user.first_name} registered in DB with deck id {new_player_deck.id}"
+                    f"{user.id}:{user.first_name} registered in DB"
                 )
             else:
                 self.logger.info(f"{user.id}:{user.first_name} already exists in DB")
@@ -113,3 +107,29 @@ class DBHelper:
                         f"{user.id}:{user.first_name} attempted to delete not their card {card_id}, not deleting"
                     )
                     return False
+
+    def create_new_game(self, user: User):
+        with db_session:
+            player = Player.get(id=str(user.id))
+            game = Game(players={player})
+            return game
+
+    def add_user_to_game(self, user: User, game_id: int) -> type_optional[str]:
+        with db_session:
+            player = Player.get(id=str(user.id))
+            if player is None:
+                self.logger.error(
+                    f"{user.id}:{user.first_name} requested to join the game but he has no record in DB"
+                )
+                return None
+            else:
+                game = Game.get(id=game_id)
+                if game is None:
+                    self.logger.error(
+                    f"{game_id}:no such game"
+                )
+                    return None
+                else:
+                    print('found the game!')
+                    game.players.add(player)
+                    return f"{player.first_name} {player.last_name}", [player.id for player in game.players]
