@@ -1,12 +1,15 @@
 from pony.orm import *
 from typing import Dict
 
+
 db = Database()
 
 
 class Game(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Optional(str)
+    players = Set("Player")
+    #cards
 
 
 class Deck(db.Entity):
@@ -17,7 +20,9 @@ class Deck(db.Entity):
 
 class Player(db.Entity):
     id = PrimaryKey(str)
-    # game = Optional(Game)
+    first_name = Required(str)
+    last_name = Required(str)
+    game = Optional(Game)
     deck = Required(Deck)
     cards = Set("Card")
 
@@ -44,12 +49,3 @@ class Card(db.Entity):
 #     card = Required(Card)
 #     in_hand = Optional(PlayerGameState)
 #     state = Required(str)
-
-
-def bind_db(config: Dict):
-    db_type = config["type"]
-    db_params = config[db_type]
-    db_params["provider"] = db_type
-    db.bind(**db_params)
-    db.generate_mapping(create_tables=True)
-    set_sql_debug(True)
