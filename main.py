@@ -37,7 +37,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     logger.info(f"{user.id}:{user.first_name} started /start")
 
-    db_helper.register_player_if_not_exist(user)
+    db_helper.register_player_if_not_exist(user.id, user.first_name + ' ' + user.last_name)
 
     await update.message.reply_text(
         """Hi! My name is Neuroginarium bot. I understand command:

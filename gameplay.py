@@ -32,6 +32,7 @@ class GameplayHandler:
         return ConversationHandler(
             entry_points=[
                 CommandHandler("new_game", self.new_game),
+                CommandHandler("join", self.join),
                 MessageHandler(filters.FORWARDED & filters.TEXT & ForwardedFromBot(), self.forward_invite)
                 ],
             states={
@@ -42,16 +43,26 @@ class GameplayHandler:
 
     async def new_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Start new game."""
-        new_game = self.db_helper.create_new_game(update.message.from_user)
+        new_game_id = self.db_helper.create_new_game(update.message.from_user.id)
 
         await update.message.reply_text(
             f"New game was created."
         )
         await update.message.reply_text(
-            f"Forward this message to bot /join {new_game.id}"
+            f"Forward this message to bot /join {new_game_id}"
         )
 
-        return "NEW_STATE"
+        return ConversationHandler.END
+
+    async def join(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+        """Join the game."""
+        text = update.message.text
+        game_id = int(text[text.find('/join') + len('/join '):])
+        new_player_name, all_users = self.db_helper.add_user_to_game(update.message.from_user.id, game_id)
+        for user_id in all_users:
+            await context.bot.send_message(int(user_id), f"{new_player_name} joined the game.")
+
+        return ConversationHandler.END
 
     @staticmethod
     async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -69,7 +80,7 @@ class GameplayHandler:
         text = update.message.text
 
         game_id = int(text[text.find('/join') + len('/join '):])
-        new_player_name, all_users = self.db_helper.add_user_to_game(update.message.from_user, game_id)
+        new_player_name, all_users = self.db_helper.add_user_to_game(update.message.from_user.id, game_id)
         for user_id in all_users:
             await context.bot.send_message(int(user_id), f"{new_player_name} joined the game.")
-
+        return ConversationHandler.END
