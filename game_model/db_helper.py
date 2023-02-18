@@ -17,19 +17,19 @@ class DBHelper:
         self.db.generate_mapping(create_tables=True)
         set_sql_debug(True)
 
-    def register_player_if_not_exist(self, user: User):
+    def register_player_if_not_exist(self, user_id: int, name: str):
         with db_session:
-            player = Player.get(id=str(user.id))
+            player = Player.get(id=str(user_id))
             if player is None:
                 self.logger.info(
-                    f"{user.id}:{user.first_name} is a new player with no record in DB"
+                    f"{user_id}:{name} is a new player with no record in DB"
                 )
-                new_player = Player(id=str(user.id), first_name=user.first_name, last_name=user.last_name, deck=Deck())
+                new_player = Player(id=str(user_id), name=name, deck=Deck())
                 self.logger.info(
-                    f"{user.id}:{user.first_name} registered in DB"
+                    f"{user_id}: {name} registered in DB"
                 )
             else:
-                self.logger.info(f"{user.id}:{user.first_name} already exists in DB")
+                self.logger.info(f"{user_id}: {name} already exists in DB")
 
     def add_card_to_user_deck(self, user: User, card_promt: str, card_path: str):
         with db_session:
@@ -108,18 +108,23 @@ class DBHelper:
                     )
                     return False
 
-    def create_new_game(self, user: User):
+    def create_new_game(self, user_id: int):
         with db_session:
-            player = Player.get(id=str(user.id))
+            player = Player.get(id=str(user_id))
             game = Game(players={player})
-            return game
-
-    def add_user_to_game(self, user: User, game_id: int) -> type_optional[str]:
+        self.logger.info(f"Game {game.id} created")
         with db_session:
-            player = Player.get(id=str(user.id))
+            player = Player.get(id=str(user_id))
+            player.game = Game.get(id=game.id)
+        return game.id
+
+    def add_user_to_game(self, user_id: int, game_id: int) -> type_optional[str]:
+        print(f'adding to game: {game_id}')
+        with db_session:
+            player = Player.get(id=str(user_id))
             if player is None:
                 self.logger.error(
-                    f"{user.id}:{user.first_name} requested to join the game but he has no record in DB"
+                    f"{user_id} requested to join the game but he has no record in DB"
                 )
                 return None
             else:
@@ -130,6 +135,7 @@ class DBHelper:
                 )
                     return None
                 else:
-                    print('found the game!')
+                    print(f'found the game! {game.id}')
                     game.players.add(player)
+                    player.game = game
                     return f"{player.first_name} {player.last_name}", [player.id for player in game.players]
