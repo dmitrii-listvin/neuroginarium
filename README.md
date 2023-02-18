@@ -1,6 +1,6 @@
-# neuroginarium
+# Neuroginarium
 
-# run locally
+# Run locally
 Create config.yml in root directory.
 Write bot token there:
 ```
@@ -32,3 +32,23 @@ database:
     host: ""
     database: ""
 ```
+
+run `python main.py config.yml`
+
+# Release
+
+## Pre-setup
+1. Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+2. Create neuroginarium_dev aws profile (ask Dima for credentials):
+    ```
+    aws configure --profile neuroginarium_dev
+    ```
+3. Create prod_config.yml in root directory with prod bot token, s3 storage and prod Postgres database (or ask Dima for one)
+
+## Release steps
+1. Increment versions in build_container.sh and upload_container.sh
+2. Run `sh build_container.sh`
+3. Run `sh upload_container.sh`
+
+# Deploy
+Now done manually by Dima via AWS console; Later will make via Github Actions.
