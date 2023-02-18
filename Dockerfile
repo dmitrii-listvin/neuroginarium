@@ -21,4 +21,4 @@ WORKDIR /src
 RUN pip3 install -r requirements.txt
 RUN chmod +x /src/main.py
 
-CMD python3 /src/main.py;
+CMD python3 /src/main.py /src/prod_config.yml;

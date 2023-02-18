@@ -1,4 +1,31 @@
-image_generator/*
-.git/*
+#this project things
+
+image_generator
+.git
 .gitignore
-venv/*
+venv
+decks
+database.sqlite
+
+#pythonic things
+
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
