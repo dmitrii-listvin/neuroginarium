@@ -14,6 +14,9 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from game_model.db_helper import DBHelper
+from image_getter import ImageGetter
+from image_storage import ImageStorage
 from game_model.model import *
 
 logger = logging.getLogger(__name__)
@@ -34,7 +37,7 @@ class Menu:
 
 
 class ViewDeckHandler:
-    def __init__(self, image_getter, image_storage, db_helper, num_of_variants) -> None:
+    def __init__(self, image_getter: ImageGetter, image_storage: ImageStorage, db_helper: DBHelper, num_of_variants: int) -> None:
         self.image_getter = image_getter
         self.image_storage = image_storage
         self.db_helper = db_helper
@@ -72,8 +75,6 @@ class ViewDeckHandler:
     @staticmethod
     async def deck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Starts the menu."""
-        user = update.message.from_user
-
         await update.message.reply_text(
             "Select an option from menu:\n\n"
             "Send /cancel to stop talking to me.",
@@ -141,7 +142,7 @@ class ViewDeckHandler:
             f"{user.id}:{user.first_name} chosen number {choice_number}; image saved to {saved_path}"
         )
 
-        self.db_helper.add_card_to_user_deck(user, context.user_data["promt"], saved_path)
+        self.db_helper.add_card_to_user_deck(user.id, context.user_data["promt"], saved_path)
 
         await update.message.reply_photo(
             photo=selected_image, caption="you added this card!"
@@ -155,7 +156,7 @@ class ViewDeckHandler:
         user = update.message.from_user
         logger.info(f"{user.id}:{user.first_name} requested to view personal deck")
 
-        player_deck_cards = self.db_helper.get_player_cards(user)
+        player_deck_cards = self.db_helper.get_player_cards(user.id)
 
         if len(player_deck_cards) == 0:
             await update.message.reply_text(
@@ -183,7 +184,7 @@ class ViewDeckHandler:
         text = update.message.text
         logger.info(f"{user.id}:{user.first_name} requested to view {text}")
 
-        card_path = self.db_helper.get_user_card_path_by_id(user, int(text))
+        card_path = self.db_helper.get_user_card_path_by_id(user.id, int(text))
         if card_path is None:
             await update.message.reply_text(f"No cards with this id!")
         else:
@@ -204,7 +205,7 @@ class ViewDeckHandler:
         logger.info(f"{user.id}:{user.first_name} requested to {text}")
 
         id_to_delete = int(text.split(" ")[1])
-        if self.db_helper.delete_player_card(user, id_to_delete):
+        if self.db_helper.delete_player_card(user.id, id_to_delete):
             await update.message.reply_text(f"Card with id {id_to_delete} is removed from your deck")
         else:
             await update.message.reply_text(f"No card with id {id_to_delete} found")

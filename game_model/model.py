@@ -19,7 +19,7 @@ class Deck(db.Entity):
 
 
 class Player(db.Entity):
-    id = PrimaryKey(str)
+    id = PrimaryKey(int)
     name = Required(str)
     game = Optional(Game)
     deck = Required(Deck)
