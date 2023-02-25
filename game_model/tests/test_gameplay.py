@@ -13,7 +13,7 @@ def db_helper():
 @pytest.fixture
 def db_helper_with_one_user(db_helper: DBHelper):
     new_user_id = 1
-    db_helper.register_player_if_not_exist(user_id=new_user_id, name='Test Testovich')
+    db_helper.register_player_if_not_exist(user_id=new_user_id, username='username')
     return db_helper
 
 
@@ -47,12 +47,12 @@ def test_join_game(db_helper_with_one_user: DBHelper):
     game_id = db_helper_with_one_user.create_new_game(user_id=host_user_id)
 
     new_user_id = 2
-    joined_user_name='Joined User'
-    db_helper_with_one_user.register_player_if_not_exist(user_id=new_user_id, name=joined_user_name)
+    joined_username = 'Joined username'
+    db_helper_with_one_user.register_player_if_not_exist(user_id=new_user_id, username=joined_username)
     
     joined_user_name, game_users_ids = db_helper_with_one_user.add_user_to_game(user_id=new_user_id, game_id=game_id)
     
-    assert joined_user_name == joined_user_name
+    assert joined_username == joined_user_name
     assert sorted(game_users_ids) == [host_user_id, new_user_id]
 
 def test_join_non_existing_game(db_helper_with_one_user: DBHelper):
@@ -60,7 +60,49 @@ def test_join_non_existing_game(db_helper_with_one_user: DBHelper):
     game_id = db_helper_with_one_user.create_new_game(user_id=host_user_id)
 
     new_user_id = 2
-    joined_user_name='Joined User'
-    db_helper_with_one_user.register_player_if_not_exist(user_id=new_user_id, name=joined_user_name)
+    joined_username='Joined username'
+    db_helper_with_one_user.register_player_if_not_exist(user_id=new_user_id, username=joined_username)
     
     assert db_helper_with_one_user.add_user_to_game(user_id=new_user_id, game_id=game_id + 1) is None
+
+def test_starting_the_game(db_helper_with_one_user: DBHelper):
+    host_user_id = 1
+    game_id = db_helper_with_one_user.create_new_game(user_id=host_user_id)
+
+    new_user_id = 2
+    joined_username='Joined username'
+    db_helper_with_one_user.register_player_if_not_exist(user_id=new_user_id, username=joined_username)
+    db_helper_with_one_user.add_user_to_game(user_id=new_user_id, game_id=game_id)
+
+    assert sorted(db_helper_with_one_user.start_user_game(user_id=host_user_id)) == [host_user_id, new_user_id]
+
+def test_attempt_to_kick_non_existing_username(db_helper_with_one_user: DBHelper):
+    host_user_id = 1
+    game_id = db_helper_with_one_user.create_new_game(user_id=host_user_id)
+
+    assert db_helper_with_one_user.kick_user(user_id=host_user_id, username_to_kick='non_existing_username') is None
+
+def test_kicking_existing_username(db_helper_with_one_user: DBHelper):
+    host_user_id = 1
+    game_id = db_helper_with_one_user.create_new_game(user_id=host_user_id)
+
+    new_user_id = 2
+    joined_username='Joined username'
+    db_helper_with_one_user.register_player_if_not_exist(user_id=new_user_id, username=joined_username)
+    db_helper_with_one_user.add_user_to_game(user_id=new_user_id, game_id=game_id)
+
+    kicked_user_id, remaining_users = db_helper_with_one_user.kick_user(user_id=host_user_id, username_to_kick=joined_username)
+    assert kicked_user_id == new_user_id
+    assert remaining_users == [host_user_id]
+
+def test_leaving_the_game(db_helper_with_one_user: DBHelper):
+    host_user_id = 1
+    game_id = db_helper_with_one_user.create_new_game(user_id=host_user_id)
+
+    new_user_id = 2
+    joined_username='Joined username'
+    db_helper_with_one_user.register_player_if_not_exist(user_id=new_user_id, username=joined_username)
+    db_helper_with_one_user.add_user_to_game(user_id=new_user_id, game_id=game_id)
+
+    remaining_users = db_helper_with_one_user.leave_game(user_id=host_user_id)
+    assert remaining_users == [new_user_id]

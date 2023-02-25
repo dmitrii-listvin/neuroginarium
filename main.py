@@ -35,9 +35,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starts the menu."""
     user = update.message.from_user
 
-    logger.info(f"{user.id}:{user.first_name} started /start")
+    logger.info(f"{user.id}:{user.username} started /start")
 
-    db_helper.register_player_if_not_exist(user.id, user.first_name + ' ' + user.last_name)
+    db_helper.register_player_if_not_exist(user.id, user.username)
 
     await update.message.reply_text(
         """Hi! My name is Neuroginarium bot. I understand command:

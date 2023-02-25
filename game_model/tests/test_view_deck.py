@@ -13,7 +13,7 @@ def db_helper():
 @pytest.fixture
 def db_helper_with_one_user(db_helper: DBHelper):
     new_user_id = 1
-    db_helper.register_player_if_not_exist(user_id=new_user_id, name='Test Testovich')
+    db_helper.register_player_if_not_exist(user_id=new_user_id, username='username')
     return db_helper
 
 
