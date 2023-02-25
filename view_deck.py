@@ -87,7 +87,7 @@ class ViewDeckHandler:
     async def generate_card_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Explain user to write a promt"""
         user = update.message.from_user
-        logger.info(f"{user.first_name} requested to generate card")
+        logger.info(f"{user.username} requested to generate card")
 
         await update.message.reply_text(
             "Write your promt to generate card, or 'menu' to return to menu",
@@ -101,7 +101,7 @@ class ViewDeckHandler:
     ) -> int:
         """Generate cards and let user choose."""
         user = update.message.from_user
-        logger.info("Promt of %s: %s", user.first_name, update.message.text)
+        logger.info("Promt of %s: %s", user.username, update.message.text)
 
         await update.message.reply_text("Generating card variants, please wait...")
         images = await self.image_getter.get_n_cards(update.message.text, self.num_of_variants)
@@ -139,7 +139,7 @@ class ViewDeckHandler:
         saved_path = await self.image_storage.save_image(selected_image)
 
         logger.info(
-            f"{user.id}:{user.first_name} chosen number {choice_number}; image saved to {saved_path}"
+            f"{user.id}:{user.username} chosen number {choice_number}; image saved to {saved_path}"
         )
 
         self.db_helper.add_card_to_user_deck(user.id, context.user_data["promt"], saved_path)
@@ -154,7 +154,7 @@ class ViewDeckHandler:
     async def view_deck(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Generate card and show it to user."""
         user = update.message.from_user
-        logger.info(f"{user.id}:{user.first_name} requested to view personal deck")
+        logger.info(f"{user.id}:{user.username} requested to view personal deck")
 
         player_deck_cards = self.db_helper.get_player_cards(user.id)
 
@@ -182,7 +182,7 @@ class ViewDeckHandler:
     async def view_card(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         user = update.message.from_user
         text = update.message.text
-        logger.info(f"{user.id}:{user.first_name} requested to view {text}")
+        logger.info(f"{user.id}:{user.username} requested to view {text}")
 
         card_path = self.db_helper.get_user_card_path_by_id(user.id, int(text))
         if card_path is None:
@@ -202,7 +202,7 @@ class ViewDeckHandler:
     async def delete_card(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         user = update.message.from_user
         text = update.message.text
-        logger.info(f"{user.id}:{user.first_name} requested to {text}")
+        logger.info(f"{user.id}:{user.username} requested to {text}")
 
         id_to_delete = int(text.split(" ")[1])
         if self.db_helper.delete_player_card(user.id, id_to_delete):
@@ -221,7 +221,7 @@ class ViewDeckHandler:
     async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Cancels and ends the conversation."""
         user = update.message.from_user
-        logger.info("User %s canceled the conversation.", user.first_name)
+        logger.info("User %s canceled the conversation.", user.username)
         await update.message.reply_text(
             "Bye! I hope we can talk again some day.", reply_markup=ReplyKeyboardRemove()
         )

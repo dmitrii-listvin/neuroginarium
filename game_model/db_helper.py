@@ -18,19 +18,19 @@ class DBHelper:
         self.db.generate_mapping(create_tables=True)
         set_sql_debug(True)
 
-    def register_player_if_not_exist(self, user_id: int, name: str):
+    def register_player_if_not_exist(self, user_id: int, username: str):
         with db_session:
             player = Player.get(id=user_id)
             if player is None:
                 self.logger.info(
-                    f"{user_id}:{name} is a new player with no record in DB"
+                    f"{user_id}:{username} is a new player with no record in DB"
                 )
-                new_player = Player(id=user_id, name=name, deck=Deck())
+                new_player = Player(id=user_id, username=username, deck=Deck())
                 self.logger.info(
-                    f"{user_id}: {name} registered in DB"
+                    f"{user_id}: {username} registered in DB"
                 )
             else:
-                self.logger.info(f"{user_id}: {name} already exists in DB")
+                self.logger.info(f"{user_id}: {username} already exists in DB")
 
     def add_card_to_user_deck(self, user_id: int, card_promt: str, card_path: str):
         with db_session:
@@ -140,7 +140,52 @@ class DBHelper:
                     print(f'found the game! {game.id}')
                     game.players.add(player)
                     player.game = game
-                    return {player.name}, [player.id for player in game.players]
+                    return player.username, [player.id for player in game.players]
+    
+    def start_user_game(self, user_id: int):
+        with db_session:
+            player = Player.get(id=user_id)
+            if player is None:
+                self.logger.error(f"{user_id} requested to start the game but he has no record in DB")
+            else:
+                game = player.game
+                if game is None:
+                    self.logger.error(f"{user_id} requested to start the game but no game record in DB")
+                else:
+                    return [p.id for p in game.players]
+
+    def kick_user(self, user_id: int, username_to_kick: str):
+        with db_session:
+            player = Player.get(id=user_id)
+            if player is None:
+                self.logger.error(f"{user_id} /kick_user player not found")
+            else:
+                game = player.game
+                if game is None:
+                    self.logger.error(f"{user_id} /kick_user game not found")
+                else:
+                    if username_to_kick not in [p.username for p in game.players]:
+                        return None
+                    else:
+                        kicked_player = [p for p in game.players if p.username == username_to_kick][0]
+                        game.players = set((p for p in game.players if p.username != username_to_kick))
+                        kicked_player.game = None
+                        return kicked_player.id, [p.id for p in game.players]
+
+    def leave_game(self, user_id: int):
+        with db_session:
+            player = Player.get(id=user_id)
+            if player is None:
+                self.logger.error(f"{user_id} /leave_game player not found")
+            else:
+                game = player.game
+                if game is None:
+                    self.logger.error(f"{user_id} /leave_game game not found")
+                else:
+                    game.players = set((p for p in game.players if p.id != user_id))
+                    player.game = None
+                    return [p.id for p in game.players]
+
 
 
 def create_inmemory_db():
