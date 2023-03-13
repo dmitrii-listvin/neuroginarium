@@ -9,7 +9,7 @@ class Game(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Optional(str)
     players = Set("Player")
-    #cards
+    cards = Set("CardGameState")
 
 
 class Deck(db.Entity):
@@ -24,6 +24,9 @@ class Player(db.Entity):
     game = Optional(Game)
     deck = Required(Deck)
     cards = Set("Card")
+    game_owner = Set("CardGameState")
+    score = Optional(int)
+    is_current_player = Optional(bool)
 
 
 # class PlayerGameState(db.Entity):
@@ -40,11 +43,12 @@ class Card(db.Entity):
     # image_storage = Required(str)
     image_path = Required(str)
     deck = Required(Deck)
+    game_state = Optional("CardGameState")
 
 
-# class CardGameState(db.Entity):
-#     id = Required(str)
-#     game = Required(Game)
-#     card = Required(Card)
-#     in_hand = Optional(PlayerGameState)
-#     state = Required(str)
+class CardGameState(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    game = Required(Game)
+    card = Optional(Card)
+    in_hand = Optional(Player)
+    state = Required(str)

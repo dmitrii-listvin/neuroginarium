@@ -74,7 +74,8 @@ def test_starting_the_game(db_helper_with_one_user: DBHelper):
     db_helper_with_one_user.register_player_if_not_exist(user_id=new_user_id, username=joined_username)
     db_helper_with_one_user.add_user_to_game(user_id=new_user_id, game_id=game_id)
 
-    assert sorted(db_helper_with_one_user.start_user_game(user_id=host_user_id)) == [host_user_id, new_user_id]
+    players, _ = db_helper_with_one_user.start_user_game(user_id=host_user_id)
+    assert sorted(players) == [host_user_id, new_user_id]
 
 def test_attempt_to_kick_non_existing_username(db_helper_with_one_user: DBHelper):
     host_user_id = 1

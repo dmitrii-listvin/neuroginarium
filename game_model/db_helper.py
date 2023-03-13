@@ -3,7 +3,11 @@ from typing import Dict, List, Optional as type_optional
 import logging
 from telegram import User
 from .model import *
+from enum import Enum
 
+NUMBER_OF_CARDS_IN_HAND = 6
+class CardState(Enum):
+    deck, hand, picked, wasted = range(4)
 
 class DBHelper:
     def __init__(self, pony_db: Database, logger):
@@ -113,11 +117,13 @@ class DBHelper:
     def create_new_game(self, user_id: int):
         with db_session:
             player = Player.get(id=user_id)
+            player.score = 0
+            player.is_current_player = True
             game = Game(players={player})
         self.logger.info(f"Game {game.id} created")
-        with db_session:
-            player = Player.get(id=user_id)
-            player.game = Game.get(id=game.id)
+        # with db_session:
+        #     player = Player.get(id=user_id)
+        #     player.game = Game.get(id=game.id)
         return game.id
 
     def add_user_to_game(self, user_id: int, game_id: int) -> type_optional[str]:
@@ -139,20 +145,40 @@ class DBHelper:
                 else:
                     print(f'found the game! {game.id}')
                     game.players.add(player)
+                    player.score = 0
+                    player.is_current_player = False
                     player.game = game
                     return player.username, [player.id for player in game.players]
     
     def start_user_game(self, user_id: int):
         with db_session:
-            player = Player.get(id=user_id)
-            if player is None:
+            host_player = Player.get(id=user_id)
+            if host_player is None:
                 self.logger.error(f"{user_id} requested to start the game but he has no record in DB")
             else:
-                game = player.game
+                game = host_player.game
                 if game is None:
                     self.logger.error(f"{user_id} requested to start the game but no game record in DB")
                 else:
-                    return [p.id for p in game.players]
+                    all_cards = []
+                    for player in game.players:
+                        all_cards.extend(player.deck.cards)
+
+                    # TODO: check number of players vs number of cards relation
+                    for card in all_cards:
+                        CardGameState(
+                            game=game,
+                            card=card,
+                            state=CardState.deck.name
+                        )
+
+                    # TODO: change for shuffle and 6 cards
+                    #for card_in_game, player in zip(game.cards, game.players):
+                    #    card_in_game.in_hand = player
+                    #    player.game_owner = card_in_game
+                    #    print('\n\nplayer!', player.username)
+
+                    return [p.id for p in game.players], len(all_cards)
 
     def kick_user(self, user_id: int, username_to_kick: str):
         with db_session:
@@ -169,6 +195,7 @@ class DBHelper:
                     else:
                         kicked_player = [p for p in game.players if p.username == username_to_kick][0]
                         game.players = set((p for p in game.players if p.username != username_to_kick))
+                        # TODO: update current player and score
                         kicked_player.game = None
                         return kicked_player.id, [p.id for p in game.players]
 
@@ -183,8 +210,17 @@ class DBHelper:
                     self.logger.error(f"{user_id} /leave_game game not found")
                 else:
                     game.players = set((p for p in game.players if p.id != user_id))
+                    # TODO: update current player and score
                     player.game = None
                     return [p.id for p in game.players]
+
+    def current_player_move(self, user_id):
+        with db_session:
+            player = Player.get(id=user_id)
+            game = player.game
+            current_player = [p for p in game.players if p.is_current_player][0]
+            #images = [one.card.image_path for one in current_player.game_owner]
+        return current_player.id, []
 
 
 
