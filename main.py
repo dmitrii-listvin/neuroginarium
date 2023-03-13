@@ -70,7 +70,7 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
 
     application.add_handler(ViewDeckHandler(image_getter, image_storage, db_helper, num_of_variants)())
-    application.add_handler(GameplayHandler(db_helper)())
+    application.add_handler(GameplayHandler(db_helper, image_storage)())
 
     application.run_polling()
 

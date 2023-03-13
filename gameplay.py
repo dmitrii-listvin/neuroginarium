@@ -15,6 +15,7 @@ from telegram.ext import (
 )
 from game_model.model import *
 from game_model.db_helper import DBHelper
+from image_storage import ImageStorage
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +29,9 @@ class ForwardedFromBot(MessageFilter):
         return message.forward_from.username == 'neuroginarium_dev_bot' # move to config or del
 
 class GameplayHandler:
-    def __init__(self, db_helper: DBHelper) -> None:
+    def __init__(self, db_helper: DBHelper, image_storage: ImageStorage) -> None:
         self.db_helper = db_helper
+        self.image_storage = image_storage
 
     def __call__(self):
         return ConversationHandler(
@@ -76,11 +78,30 @@ class GameplayHandler:
     async def start_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Start the game."""
         
-        all_users = self.db_helper.start_user_game(update.message.from_user.id)
+        all_users, number_of_cards = self.db_helper.start_user_game(update.message.from_user.id)
         for user_id in all_users:
-            await context.bot.send_message(user_id, "Game is started:")
+            await context.bot.send_message(user_id, f"Game is started:\nNumber of cards = {number_of_cards}")
 
-        # call game deck creation
+        current_player, hand = self.db_helper.current_player_move(update.message.from_user.id)
+        images = []
+        #for card_path in hand:
+        #    await images.append(self.image_storage.load_image(card_path))
+        await context.bot.send_message(current_player, f"Your turn dude!")
+
+        # media_group = [
+        #     InputMediaPhoto(media=image, caption=str(i + 1))
+        #     for i, image in enumerate(images)
+        # ]
+        # await context.bot.send_media_group(current_player, media=media_group)
+        # await context.bot.send_message(
+        #     current_player,
+        #     text = "Choose the best of cards:",
+        #     reply_markup=ReplyKeyboardMarkup(
+        #         [[str(i + 1) for i in range(self.num_of_variants)], ["None"]],
+        #         one_time_keyboard=True,
+        #     ),
+        # )
+
 
         return PLAYING_STATE
 
